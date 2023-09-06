@@ -5,6 +5,7 @@
 命令基于以下环境运行，供参考
 
 - CentOS 7.9
+- git 2.39
 - Docker 23.0.1
 - Docker Compose v2+
 
@@ -26,6 +27,22 @@
 |                  |                     |
 |                  |                     |
 
+## 快速开始
+
+下载项目到需要部署的目录，如 `/usr/local/docker`
+
+```
+cd /usr/local/docker
+git clone https://github.com/topbpm/cloud-middleware-docker.git
+
+# 修改 cloud-middleware-docker/mysql/sql/cloud.sql， 参考 修改应用地址 说明
+vim cloud-middleware-docker/mysql/sql/cloud.sql
+
+cd cloud-middleware-docker
+# 启动服务
+docker compoese up -d
+```
+
 ## 修改应用地址
 
 修改 `项目文件夹/mysql/sql/cloud.sql` 文件，将脚本中最后一行 https://www.baidu.com 替换为 测试应用的首页地址
@@ -33,13 +50,6 @@
 ```sql
 -- 请将 https://www.baidu.com 替换为 测试应用的首页地址
 INSERT INTO `t_app_route`(`Id`, `appid`, `url`, `default`) VALUES ('38c48347-4434-4c5a-bdce-85bd0668e452', 'dev', 'https://www.baidu.com', b'1');
-```
-
-## 启动服务
-
-```shell
-# 在项目根目录执行以下命令启动服务
-docker compose up -d
 ```
 
 ## 重新部署
