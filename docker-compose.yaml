@@ -1,0 +1,173 @@
+version: '3'
+services:
+  nginx:
+    image: nginx
+    restart: always
+    container_name: nginx
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      - secco_user_center_web
+      - secco_user_center_api
+      - asp-interface
+    ports:
+      - '80:80'
+    volumes:
+      - ./conf/nginx:/etc/nginx/conf.d
+  mysql:
+    image: mysql
+    restart: always
+    container_name: mysql
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 1qaz@WSX
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./mysql/sql:/docker-entrypoint-initdb.d
+    command: --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --default-authentication-plugin=mysql_native_password --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=1
+  apollo-quick-start:
+    image: nobodyiam/apollo-quick-start
+    restart: always
+    container_name: apollo-quick-start
+    depends_on:
+      apollo-db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "8070:8070"
+      - "8090:8090"
+    links:
+      - apollo-db
+  apollo-db:
+    image: mysql:8.0
+    restart: always
+    container_name: apollo-db
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 1s
+      retries: 10
+    ports:
+      - "13306:3306"
+    volumes:
+      - ./apollo/sql:/docker-entrypoint-initdb.d
+    command: --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --default-authentication-plugin=mysql_native_password --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=1
+  consul_node1:
+    image: consul
+    restart: always
+    container_name: consul_node1
+    command: agent -server -ui -node=consul_node1 -bootstrap-expect=1 -client=0.0.0.0
+    ports:
+      - 8500:8500
+  redis:
+    image: redis
+    restart: always
+    container_name: redis
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - '6379:6379'
+    command: redis-server
+  cloud-middleware-auth:
+    image: harbor.topbpm.com/cloud-middleware/auth:0.8.1
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+      - apollo-quick-start
+      - consul_node1
+    container_name: cloud-middleware-auth
+    volumes:
+      - "./conf/cloud-middlware:/data/conf"
+  cloud-middleware-database:
+    image: harbor.topbpm.com/cloud-middleware/database:0.8.1
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+      - apollo-quick-start
+      - consul_node1
+      - cloud-middleware-auth
+      - cloud-middleware-log
+    container_name: cloud-middleware-database
+    volumes:
+      - "./conf/cloud-middlware:/data/conf"
+  cloud-middleware-log:
+    image: harbor.topbpm.com/cloud-middleware/log:0.8.2
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+      - apollo-quick-start
+      - consul_node1
+      - cloud-middleware-auth
+    container_name: cloud-middleware-log
+    volumes:
+      - "./conf/cloud-middlware:/data/conf"
+  cloud-middleware-redis:
+    image: harbor.topbpm.com/cloud-middleware/redis:0.8.1
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+      - apollo-quick-start
+      - consul_node1
+      - cloud-middleware-auth
+    container_name: cloud-middleware-redis
+    volumes:
+      - "./conf/cloud-middlware:/data/conf"
+  asp-application-service:
+    image: harbor.topbpm.com/asp/application_service:0.4.5
+    restart: always
+    depends_on:
+      - consul_node1
+      - cloud-middleware-auth
+      - cloud-middleware-database
+      - cloud-middleware-log
+    container_name: asp-application-service
+    volumes:
+      - "./conf/asp:/data/conf"
+  asp-interface:
+    image: harbor.topbpm.com/asp/asp_interface:0.4.5
+    restart: always
+    depends_on:
+      - asp-application-service
+    container_name: asp-interface
+    volumes:
+      - "./conf/asp:/data/conf"
+  secco_user_center_api:
+    image: harbor.topbpm.com/secco_user_center/secco_user_center_api:v0.1.4
+    restart: always
+    depends_on:
+      - secco_user_center_service
+    container_name: secco_user_center_api
+    volumes:
+      - "./conf/secco_user_center:/data/conf"
+  secco_user_center_service:
+    image: harbor.topbpm.com/secco_user_center/secco_user_center_service:v0.3.14
+    restart: always
+    depends_on:
+      - cloud-middleware-auth
+      - cloud-middleware-database
+      - cloud-middleware-log
+    container_name: secco_user_center_service
+    volumes:
+      - "./conf/secco_user_center:/data/conf"
+  secco_user_center_web:
+    image: harbor.topbpm.com/secco_user_center/secco_user_center_web:v0.1.13-demo
+    restart: always
+    depends_on:
+      - secco_user_center_api
+    container_name: secco_user_center_web

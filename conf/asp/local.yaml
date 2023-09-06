@@ -1,0 +1,9 @@
+server:
+  grpc:
+    addr: 0.0.0.0:0
+    timeout: 1s
+sdk:
+  appId: CloudMiddleware
+  secret: W06zO5DdyUPz17AmYGq8a6FsDFBJTAnRUdehshYsRKI
+page:
+  error: https://app.topbpm.com/user/web/#/error/

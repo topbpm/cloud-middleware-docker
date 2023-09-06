@@ -1,0 +1,6 @@
+config:
+  type: apollo
+  apollo:
+    endpoint: http://apollo-quick-start:8080
+    cluster: dev
+    namespace: application,data.yaml

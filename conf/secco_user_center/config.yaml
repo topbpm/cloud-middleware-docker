@@ -1,0 +1,29 @@
+server:
+  http:
+    addr: 0.0.0.0:8080
+  grpc:
+    addr: 0.0.0.0:0
+    timeout: 1s
+
+registry:
+  type: consul
+  app_id: secco_user_center
+  secret: SYZUgy8uo4BsEgmerJtrqCfOOyYOaxdPy8CGePwSZK7
+  consul:
+    address: consul_node1:8500
+    scheme: http
+
+data:
+  jwt_secret: secco_uc2023
+  session_exp: 259200s
+  openssl_key: 992ffcce941a9d3521d716415c29b47d
+  ldap:
+    host:
+    port: 636
+    tls: true
+    admin_dn: CN=Administrator,CN=Users,DC=secco_test,DC=com
+    password: T0p6pm@bnfit.cn
+    ou_dn: DC=secco_test,DC=com
+  aliyun_sms:
+    sign_name: topbpm孚鼎
+    template_code: SMS_109515334
